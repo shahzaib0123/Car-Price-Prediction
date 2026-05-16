@@ -49,8 +49,8 @@ car-price-prediction/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/car-price-prediction.git
-cd car-price-prediction
+git clone https://github.com/shahzaib0123/Car-Price-Prediction.git
+cd Car-Price-Prediction
 ```
 
 ### 2. Install dependencies
