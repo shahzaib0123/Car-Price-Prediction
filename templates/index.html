@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Car Price Predictor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .header .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.3rem;
+    }
+
+    .header p {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.45rem;
+    }
+
+    input, select {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2e2e2e;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      color: #f0f0f0;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #4f8ef7;
+    }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+
+    select option { background: #1a1a1a; }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.3rem;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: #4f8ef7;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { background: #3a7de0; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background: #333; cursor: not-allowed; }
+
+    .result {
+      margin-top: 1.5rem;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 1.4rem;
+      text-align: center;
+      display: none;
+    }
+
+    .result.show { display: block; }
+    .result.error { border-color: #f74f4f33; }
+
+    .result-label {
+      font-size: 0.78rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-pkr {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #4f8ef7;
+      margin-bottom: 0.3rem;
+    }
+
+    .result-usd {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .result-error {
+      color: #f74f4f;
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      display: none;
+      width: 20px; height: 20px;
+      border: 2px solid #ffffff44;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: #444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="icon">🚗</div>
+    <h1>Car Price Predictor</h1>
+    <p>Powered by Random Forest · Trained on 2,840 cars</p>
+  </div>
+
+  <form id="predictForm">
+    <div class="form-group">
+      <label>Car Brand</label>
+      <select name="brand" required>
+        <option value="" disabled selected>Select a brand</option>
+        {% for brand in meta.brands %}
+        <option value="{{ brand }}">{{ brand }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Year of Manufacture</label>
+      <input
+        type="number"
+        name="year"
+        min="{{ meta.year_min }}"
+        max="{{ meta.year_max }}"
+        placeholder="e.g. 2020"
+        required
+      />
+      <div class="hint">Between {{ meta.year_min }} and {{ meta.year_max }}</div>
+    </div>
+
+    <div class="form-group">
+      <label>Mileage Driven (km)</label>
+      <input
+        type="number"
+        name="km_driven"
+        min="0"
+        placeholder="e.g. 45000"
+        required
+      />
+      <div class="hint">Enter total kilometers driven</div>
+    </div>
+
+    <button type="submit" class="btn" id="submitBtn">
+      <span id="btnText">Predict Price</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+  </form>
+
+  <div class="result" id="result">
+    <div class="result-label" id="resultLabel">Estimated Price</div>
+    <div class="result-pkr" id="resultPkr"></div>
+    <div class="result-usd" id="resultUsd"></div>
+    <div class="result-error" id="resultError"></div>
+  </div>
+</div>
+
+<div class="footer">
+  Prices are estimates based on historical data · USD rate: 278 PKR
+</div>
+
+<script>
+  document.getElementById('predictForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const spinner = document.getElementById('spinner');
+    const result = document.getElementById('result');
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    spinner.style.display = 'block';
+    result.classList.remove('show', 'error');
+
+    try {
+      const formData = new FormData(this);
+      const response = await fetch('/predict', { method: 'POST', body: formData });
+      const data = await response.json();
+
+      if (data.error) {
+        result.classList.add('show', 'error');
+        document.getElementById('resultLabel').style.display = 'none';
+        document.getElementById('resultPkr').style.display = 'none';
+        document.getElementById('resultUsd').style.display = 'none';
+        document.getElementById('resultError').textContent = data.error;
+        document.getElementById('resultError').style.display = 'block';
+      } else {
+        result.classList.add('show');
+        document.getElementById('resultLabel').style.display = 'block';
+        document.getElementById('resultLabel').textContent = 'Estimated Price';
+        document.getElementById('resultPkr').style.display = 'block';
+        document.getElementById('resultPkr').textContent = data.price_pkr;
+        document.getElementById('resultUsd').style.display = 'block';
+        document.getElementById('resultUsd').textContent = data.price_usd + ' USD';
+        document.getElementById('resultError').style.display = 'none';
+      }
+    } catch (err) {
+      result.classList.add('show', 'error');
+      document.getElementById('resultError').textContent = 'Something went wrong. Please try again.';
+      document.getElementById('resultError').style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btnText.style.display = 'block';
+    spinner.style.display = 'none';
+  });
+</script>
+</body>
+</html>
